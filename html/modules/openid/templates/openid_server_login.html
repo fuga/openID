@@ -1,0 +1,30 @@
+<form action="<{$xoops_url}>/user.php" method="post" style="display: inline;">
+<{xoops_input type=hidden name=op value=login}>
+<input type="hidden" name="xoops_redirect" value="<{$redirect_page|escape}>"/>
+<table class="outer">
+  <tr>
+    <th colspan="2" style="text-align:center;"><{$smarty.const._LOGIN}></th>
+  </tr>
+  <tr>
+    <td class="head"><{$smarty.const._USERNAME}></td>
+    <td class="<{cycle values="odd,even"}>">
+      <{xoops_input type=text name=uname size=25 maxlength=25}>
+    </td>
+  </tr>
+  <tr>
+    <td class="head"><{$smarty.const._PASSWORD}></td>
+    <td class="<{cycle values="odd,even"}>">
+     <{xoops_input type=password name=pass size=30 maxlength=32}>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="foot" style="text-align:center;">
+      <input type="submit" value="<{$smarty.const._LOGIN}>" />
+</form>
+     <form action="<{$cancel_url|escape}>" method="post" style="display: inline;">
+      <input type="submit" name="cancel" value="<{$smarty.const._CANCEL}>" />
+     </form>
+    </td>
+  </tr>
+</table>
+<{$need}>

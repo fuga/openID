@@ -72,6 +72,16 @@ $modversion['templates'][3]['description'] = 'Template for admin panel';
 $modversion['templates'][4]['file'] = 'openid_login.html';
 $modversion['templates'][4]['description'] = 'Included template for login';
 
+$modversion['templates'][] = array(
+    'file' => 'openid_server_default.html',
+    'description' => 'Message template for OpenID Provider');
+$modversion['templates'][] = array(
+    'file' => 'openid_server_login.html',
+    'description' => 'Login page for OpenID Provider function');
+$modversion['templates'][] = array(
+    'file' => 'openid_server_trust.html',
+    'description' => 'Trust page for OpenID Provider function');
+
 // Config
 $modversion['hasconfig'] = 1;
 $modversion['config'] = array();

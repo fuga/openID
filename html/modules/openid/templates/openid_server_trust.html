@@ -1,0 +1,16 @@
+<p>
+Do you wish to confirm your identity with this Relying Party?
+ <{$trust_root|escape}>
+</p>
+<p>
+Check the item that you wish send to RP.
+</p>
+<input type="checkbox" checked="checked" disabled="disabled"/>Claimed Identifier
+<div><{$identifier|escape}></div>
+<input type="checkbox" checked="checked" disabled="disabled"/>Nickname
+<form method="post" action="<{$trust_url|escape}>">
+ <input type="checkbox" name="allowed[]" value="email"/>E-mail<br/>
+ <input type="checkbox" name="allowed[]" value="name"/>Real name<br/>
+ <input type="submit" name="trust" value="Confirm"/>
+ <input type="submit" name="cancel" value="<{$smarty.const._CANCEL}>"/>
+</form>

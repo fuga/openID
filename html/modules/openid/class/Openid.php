@@ -1,47 +1,37 @@
 <?php
-define('OPENID_BAD_REQUEST', 400);
+if (!defined('OPENID_UNSUCCESSFUL_EXIT')) {
+    // You can change this for debug.
+    define('OPENID_UNSUCCESSFUL_EXIT', 1);
+}
+
+function __autoload($class)
+{
+    if (strpos($class, 'Openid_') === 0) {
+        $class = substr($class, 7);
+        $file_name  = XOOPS_ROOT_PATH . '/modules/openid/class/';
+        $file_name .= str_replace('_', DIRECTORY_SEPARATOR, $class);
+        $file_name .= '.php';
+
+        require $file_name;
+    }
+}
+
 class Openid
 {
     /**
-     * Endpoint URL of this server
-     * @var string
+     * Render by using XOOPS render system
+     * 
+     * @var Openid_Render
      */
-    private $end_point = '';
-
-    /**
-     * XOOPS template name
-     * @var string
-     */
-    private $template = '';
-
-    /**
-     * XOOPS template vars
-     * @var string
-     */
-    private $tpl_vars = array();
+    private $render;
 
     public function __construct()
     {
-        if (!@$GLOBALS['xoopsModuleConfig']['openid_rand_souce']) {
-            define('Auth_OpenID_RAND_SOURCE', NULL);
-        } else if (!@is_readable($GLOBALS['xoopsModuleConfig']['openid_rand_souce'])) {
-            redirect_header(XOOPS_URL, 2, 'Please set rand_source on admin panel');
-        } else {
-            define('Auth_OpenID_RAND_SOURCE', $GLOBALS['xoopsModuleConfig']['openid_rand_souce']);
-        }
-        if (@$GLOBALS['xoopsModuleConfig']['curl_cainfo_file']) {
-            $cainfo = str_replace('XOOPS_ROOT_PATH', XOOPS_ROOT_PATH, $GLOBALS['xoopsModuleConfig']['curl_cainfo_file']);
-            define('Auth_OpenID_CURLOPT_CAINFO_FILE', $cainfo);
-        }
-
-        $path_extra = XOOPS_ROOT_PATH . '/modules/openid/class/php5-openid';
-        $path = ini_get('include_path');
-        $path = $path_extra . PATH_SEPARATOR . $path;
-        ini_set('include_path', $path);
     }
 
     public function execute()
     {
+        $this->render = new Openid_Render();
         if (TRUE) {
             $this->server();
         } else {
@@ -51,15 +41,11 @@ class Openid
 
     public function view()
     {
-        $GLOBALS['xoopsOption']['template_main'] = $this->template;
-        foreach ($this->tpl_vars as $k => $v) {
-            $GLOBALS['xoopsTpl']->assign($k, $v);
-        }
+        $this->render->view();
     }
 
     private function server()
     {
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/Url.php';
         $action = Openid_Server_Url::extract();
         if ($action == '') {
             $method = 'action_Default';
@@ -67,156 +53,143 @@ class Openid
             $method = 'action_' . ucfirst($action);
         }
         if (!method_exists($this, $method)) {
-            exit(OPENID_BAD_REQUEST);
+            exit(OPENID_UNSUCCESSFUL_EXIT);
         }
 
-        $this->end_point = Openid_Server_Url::build();
         try {
             $response = $this->$method();
         } catch (Exception $e) {
-            header('X-XRDS-Location: ' . Openid_Server_Url::build('idpXrds'));
-            $this->template = 'openid_server_default.html';
-            $this->tpl_vars['message'] = $e->getMessage();
+            $this->render->errorPage($e);
             return;
         }
 
         if ($response) {
+            // Output response values
+            list($headers, $body) = $response;
+
             // clear output buffer
             while (ob_get_level()) {
                 ob_end_clean();
             }
 
-            if (isset($response[2])) {
-                header("HTTP/1.1 %d ", $response[2], TRUE, $response[2]);
+            if (isset($response[3])) {
+                $code = $response[3];
+                header(sprintf('HTTP/1.1 %d ', $code), TRUE, $code);
             }
-            array_walk($response[0], 'header');
+            if ($headers) {
+                array_walk($headers, 'header');
+            }
             header('Connection: close');
-            header('Content-length: ' . strlen($response[1]));
-            echo $response[1];
+            header('Content-length: ' . strlen($body));
+            echo $body;
             exit(0);
         } else {
-            // continue self::view() method after include xoops_header
+            // continue $this->view() method after include xoops_header
+            // data is set in $this->render
         }
     }
 
     /**
      * Handle a standard OpenID server request
      * 
-     * @return array OR FALSE
+     * @return array (array $headers, string $body, int code=NULL) OR FALSE
      */
     private function action_Default()
     {
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/LibWrapper.php';
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/Member.php';
-
-        $library = new Openid_Server_LibWrapper($this->end_point);
-        $identity = Openid_Server_Member::getLoggedInUser();
-        $output = $library->handleRequest(!$identity);
+        $library = new Openid_Server_LibWrapper($GLOBALS['xoopsModuleConfig']);
+        $end_point = Openid_Server_Url::build();
+        $output = $library->handleConsumerRequest($end_point);
         if ($output) {
             return $output;
         }
-        if ($identity) {
-            $this->renderTrust($library, $identity);
+        $user = Openid_Server_Member::getLoggedInUser();
+        if ($user) {
+            $this->renderTrust($library, $user);
         } else {
+            $needed = NULL;
             $claimed_identity = $library->getClaimedIdentity();
-        	$this->renderLogin($claimed_identity);
-		}
+            if ($claimed_identity) {
+                $user_info = Openid_Server_Url::idFromURL($claimed_identity);
+                $needed = Openid_Server_Member::getUserByVarArray($user_info);
+            }
+            $this->render->loginForm($needed);
+            $library->stash('file');
+        }
         return FALSE;
     }
 
     /**
-     * 
-     * @param string $identity
-     * @return void
-     */
-    private function renderTrust($library, $identity)
-    {
-		$this->template = 'openid_server_trust.html';
-		$this->tpl_vars['identifier'] = $identity;
-        $trust_root = $library->getTrustRoot($identity);
-		$this->tpl_vars['trust_root'] = $trust_root;
-		$this->tpl_vars['trust_url'] = Openid_Server_Url::build('auth');
-    }
-
-    /**
-     * Build Login Page
-     * @param string $claimed_identity
-     */
-    private function renderLogin($claimed_identity)
-    {
-        $this->template = 'openid_server_login.html';
-        $this->tpl_vars['redirect_page'] = Openid_Server_Url::build('trust', NULL, FALSE);
-        $this->tpl_vars['cancel_url'] = Openid_Server_Url::build('cancel');
-        if ($claimed_identity) {
-            $need = Openid_Server_Member::getUnameFromUrl($claimed_identity);
-            if ($need) {
-                $this->tpl_vars['need'] = sprintf('You must be logged in as [%s] to approve this request.', $need);
-            }
-        }
-    }
-
-    /**
      * Ask the user whether he wants to trust this site
+     * 
      * @return FALSE
      */
     private function action_Trust()
     {
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/LibWrapper.php';
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/Member.php';
-
-        $library = new Openid_Server_LibWrapper($this->end_point, 'c');
-        $identity = Openid_Server_Member::getLoggedInUser();
-        if ($identity) {
-            $this->renderTrust($library, $identity);
-            return FALSE;
-        } else {
-            throw new Exception('This page is only show after success login.');
+        $library = new Openid_Server_LibWrapper($GLOBALS['xoopsModuleConfig']);
+        if ($library->resume('file')) {
+	        $user = Openid_Server_Member::getLoggedInUser();
+	        if ($user) {
+                $this->renderTrust($library, $user);
+	            return FALSE;
+	        }
         }
+        throw new Exception('This page is only show after success login.');
+    }
+
+    private function renderTrust($library, $user)
+    {
+        $identity = Openid_Server_Url::build('user', $user);
+        $trust_root = $library->getTrustRoot($identity);
+        $this->render->trustForm($identity, $trust_root);
+        $library->stash();
     }
 
     /**
      * Potentially continue the requested identity approval
      * 
-     * @return array
+     * @return array (array $headers, string $body, int code=NULL)
      */
     private function action_Auth()
     {
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/LibWrapper.php';
-        $library = new Openid_Server_LibWrapper($this->end_point, 's');
+        $library = new Openid_Server_LibWrapper($GLOBALS['xoopsModuleConfig']);
+        if (!$library->resume()) {
+            exit(OPENID_UNSUCCESSFUL_EXIT);
+        }
     	if (isset($_POST['cancel'])) {
             return $library->authCancel();
         } elseif (empty($_POST['trust'])) {
-    		exit(OPENID_BAD_REQUEST);
+    		exit(OPENID_UNSUCCESSFUL_EXIT);
         }
-        require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/Member.php';
-        $identity = Openid_Server_Member::getLoggedInUser();
-        if ($identity) {
-            $user_data = Openid_Server_Member::getUserData($_POST['allowed']);
+        $user = Openid_Server_Member::getLoggedInUser();
+        if ($user) {
+            $identity = Openid_Server_Url::build('user', $user);
+            $user_data = Openid_Server_Member::getUserData(@$_POST['allowed']);
             //@todo Save trust info to DB
             return $library->doAuth($identity, $user_data);
         } else {
-            exit(OPENID_BAD_REQUEST);
+            exit(OPENID_UNSUCCESSFUL_EXIT);
         }
     }
 
     /**
      * Cancel identify
-     * @return array
+     * 
+     * @return array (array $headers, string $body, int code=NULL)
      */
     private function action_Cancel()
     {
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-	    	require_once XOOPS_ROOT_PATH . '/modules/openid/class/Server/LibWrapper.php';
-	        $library = new Openid_Server_LibWrapper($this->end_point, 'c');
+        $library = new Openid_Server_LibWrapper($GLOBALS['xoopsModuleConfig']);
+        if ($library->resume('file')) {
             return $library->authCancel();
+        } else {
+            exit(OPENID_UNSUCCESSFUL_EXIT);
         }
-        exit(OPENID_BAD_REQUEST);
     }
 
     /**
      * OP Identifier XRDS
      * 
-     * @return array
+     * @return array (array $headers, string $body, int code=NULL)
      */
     private function action_IdpXrds()
     {
@@ -227,7 +200,7 @@ class Openid
     /**
      * User XRDS
      * 
-     * @return array
+     * @return array (array $headers, string $body, int code=NULL)
      */
     private function action_UserXrds()
     {
@@ -236,33 +209,42 @@ class Openid
     }
 
     /**
+     * Build XRDS
      * 
      * @param string $format
-     * @return array
+     * @return array (array $headers, string $body, int code=NULL)
      */
     private function renderXrds($format)
     {
         $headers = array('Content-type: application/xrds+xml');
-        $body = sprintf($format, $this->end_point);
+        $end_point = Openid_Server_Url::build();
+        $body = sprintf($format, $end_point);
         return array($headers, $body);
     }
 
     /**
-     * User Claimed Identifier Page
+     * User Claimed Identifier Page.
      * 
-     * @return array
+     * @return FALSE
      */
     private function action_User()
     {
-        require_once XOOPS_ROOT_PATH . '/modules/openid/include/formats.php';
-		$xrds_location = Openid_Server_Url::build('userXrds');
-		$headers = array('X-XRDS-Location: '.$xrds_location);
-        $body = sprintf(OPENID_IDPAGE, $xrds_location, $this->end_point);
-		return array($headers, $body);
+        $user = Openid_Server_Member::getUserByVarArray($_GET);
+    	if ($user) {
+    		$this->render->userIdentifier($user);
+    		return FALSE;
+        } else {
+            throw new Exception("Such user doesn't exist.");
+        }
     }
 
     private function consumer()
     {
-        // Not implemented yet
+        /*
+         * Not implemented yet
+         * 
+        $consumer = new Openid_Consumer_Controller();
+        $consumer->execute($this->render);
+         */
     }
 }

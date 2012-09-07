@@ -42,4 +42,8 @@ define('_MD_OPENID_ERROR_REGISTERNG', 'An error occurred while registering the u
 define('_MD_OPENID_ERROR_INCORRECTLOGIN', 'Username or password is incorrect');
 define('_MD_OPENID_MESSAGE_LOADING', 'Now loading. Please wait.');
 define('_MD_OPENID_MESSAGE_INPUT_ID', 'Please input %s ID.');
-?>
+// OpenID Provider
+define('_MD_OPENID_MESSAGE_LOGIN_AS', 'You must be logged in as %s to approve this request.');
+define('_MD_OPENID_MESSAGE_DO_CONFIRM', 'Do you wish to confirm your identity with this Relying Party?');
+define('_MD_OPENID_LANG_RP_ROOT', 'RP to login');
+define('_MD_OPENID_LANG_NAME', 'Real Name');

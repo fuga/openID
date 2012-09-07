@@ -1,4 +1,8 @@
 <?php
+if (!defined('OPENID_EXTRA_URL_FUNC')) {
+    define('OPENID_EXTRA_URL_FUNC', XOOPS_ROOT_PATH . '/id/functions.php');
+}
+
 /**
  * Static Class for handling URL
  *
@@ -7,12 +11,16 @@ class Openid_Server_Url
 {
     /**
      * Extract the current action from the request
+     * 
      * @return string
      */
-    static function extract()
+    public static function extract()
     {
-        $path_info = @$_SERVER['PATH_INFO'];
-        $action = ($path_info) ? substr($path_info, 1) : '';
+        if (!empty($_SERVER['PATH_INFO'])) {
+            $action = substr($_SERVER['PATH_INFO'], 1);
+        } else {
+            $action = '';
+        }
         return $action;
     }
 
@@ -21,10 +29,9 @@ class Openid_Server_Url
      * 
      * @param string $action
      * @param XoopsUser $user
-     * @param boolean $full
-     * @return string $url
+     * @param boolean $local
      */
-    static function build($action=NULL, $user=NULL, $full=TRUE)
+    public static function build($action=NULL, XoopsUser $user=NULL, $local=FALSE)
     {
         $url = '/modules/openid/server.php';
         if (!$action) {
@@ -32,59 +39,38 @@ class Openid_Server_Url
         }
 
         $url .= '/' . $action;
-        if (file_exists(XOOPS_ROOT_PATH . '/id/index.php')) {
-            switch ($action) {
-                case 'idpXrds':
-                    $url = '/id/idp.xrds';
-                    break;
-                case 'userXrds':
-                    $url = '/id/user.xrds';
-                    break;
-                case 'user':
-                    $url = sprintf('/id/%s', $user->getVar('uname'));
-                    break;
-            }
+        if (file_exists(OPENID_EXTRA_URL_FUNC)) {
+            include_once OPENID_EXTRA_URL_FUNC;
+            openidBuildServerUrl($url, $action, $user);
         } elseif ($user) {
             $url .= sprintf('?uid=%d', $user->getVar('uid'));
         }
-        if ($full) {
-            return XOOPS_URL . $url;
+        if ($local) {
+            $parsed = parse_url(XOOPS_URL);
+            $root_path = isset($parsed['path']) ? $parsed['path'] : '';
+            return $root_path . $url;
         } else {
-            return $url;
+            return XOOPS_URL . $url;
         }
     }
 
     /**
+     * Get user-info from identity url
      * 
      * @param string $url
-     * @return array $ret
+     * @return array $user_info
      */
     static function idFromURL($url)
     {
-        $ret = array();
-        if (file_exists(XOOPS_ROOT_PATH . '/id/index.php')) {
-            $path = strrchr($_SERVER['REQUEST_URI'], '/');
-            if (strlen($path) > 1) {
-                $ret['uname'] = substr($path, 1);
-            }
+        $user_info = array();
+        if (file_exists(OPENID_EXTRA_URL_FUNC)) {
+            include_once OPENID_EXTRA_URL_FUNC;
+            openidGetUserInfoFromIdentyUrl($user_info, $url);
         } else {
-	        $parsed = parse_url($url);
-	        if ($parsed) {
-	            $query = isset($parsed['query']) ? $parsed['query'] : '';
-	            $parts = array();
-	            parse_str($query, $parts);
-	            if (isset($parts['uid'])) {
-	                $ret['uid'] = intval($parts['uid']);
-	            } elseif (isset($parts['uname'])) {
-	                $ret['uname'] = trim($parts['uname']);
-	            } else {
-	                $path = isset($parsed['path']) ? $parsed['path'] : '';
-	                if (strlen($path) > 1) {
-	                    $ret['uname'] = substr($path, 1);
-	                }
-	            }
-	        }
+            $parsed = parse_url($url);
+            $query = isset($parsed['query']) ? $parsed['query'] : '';
+            parse_str($query, $user_info);
         }
-        return $ret;
+        return $user_info;
     }
 }

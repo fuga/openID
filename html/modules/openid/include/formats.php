@@ -39,10 +39,13 @@ define('OPENID_USER_XRDS',
 define('OPENID_IDPAGE',
 '<html>
 <head>
- <meta http-equiv="X-XRDS-Location" content="%s"/>
- <link rel="openid2.provider openid.server" href="%s"/>
+ <meta http-equiv="X-XRDS-Location" content="%1$s"/>
+ <link rel="openid2.provider openid.server" href="%2$s"/>
+ <script type="text/javascript">
+  location.href = "%3$s";
+ </script>
 </head>
 <body>
-  This is the identity page of this server.
+  This is the identity page of <a href="%3$s">this server</a>.
 </body>
 </html>');

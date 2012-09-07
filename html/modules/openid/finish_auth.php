@@ -140,7 +140,7 @@ do {
             foreach ($timezones as $timezone) {
                 foreach ($timezone as $tz) {
                     if ($tz['dst'] === false && $tz['timezone_id'] == $sreg_tz) {
-                        if ($tz['offset'] % 1800 == 0) {
+                        if ($tz['offset'] % 3600 == 0) {
                             $timezone_offset = $tz['offset'] / 3600;
                             break 2;
                         }

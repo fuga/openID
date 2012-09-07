@@ -1,3 +1,6 @@
+<p>
+<{$login_as|string_format:$smarty.const._MD_OPENID_MESSAGE_LOGIN_AS}>
+</p>
 <form action="<{$xoops_url}>/user.php" method="post" style="display: inline;">
 <{xoops_input type=hidden name=op value=login}>
 <input type="hidden" name="xoops_redirect" value="<{$redirect_page|escape}>"/>
@@ -27,4 +30,3 @@
     </td>
   </tr>
 </table>
-<{$need}>

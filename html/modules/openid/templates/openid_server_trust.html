@@ -1,16 +1,31 @@
 <p>
-Do you wish to confirm your identity with this Relying Party?
- <{$trust_root|escape}>
+<{$smarty.const._MD_OPENID_MESSAGE_DO_CONFIRM}>
 </p>
-<p>
-Check the item that you wish send to RP.
-</p>
-<input type="checkbox" checked="checked" disabled="disabled"/>Claimed Identifier
-<div><{$identifier|escape}></div>
-<input type="checkbox" checked="checked" disabled="disabled"/>Nickname
+<dl>
+ <dt><{$smarty.const._MD_OPENID_LANG_RP_ROOT}></dt>
+ <dd><{$trust_root|escape}></dd>
+ <dt><{$smarty.const._MD_OPENID_YOUR_OPENID}></dt>
+ <dd>
+  <input type="checkbox" checked="checked" disabled="disabled"/>
+  <{$identifier|escape}>
+ </dd>
+ <dt><{$smarty.const._USERNAME}></dt>
+ <dd>
+  <input type="checkbox" checked="checked" disabled="disabled"/>
+  <{$xoops_uname}>
+ </dd>
 <form method="post" action="<{$trust_url|escape}>">
- <input type="checkbox" name="allowed[]" value="email"/>E-mail<br/>
- <input type="checkbox" name="allowed[]" value="name"/>Real name<br/>
- <input type="submit" name="trust" value="Confirm"/>
+ <dt><{$smarty.const._MD_OPENID_EMAIL}></dt>
+ <dd>
+  <input type="checkbox" name="allowed[]" value="email"/>
+  <{$email|escape}>
+ </dd>
+ <dt><{$smarty.const._MD_OPENID_LANG_NAME}></dt>
+ <dd>
+  <input type="checkbox" name="allowed[]" value="name"/>
+  <{$name|escape}>
+ </dd>
+</dl>
+ <input type="submit" name="trust" value="<{$smarty.const._SUBMIT}>"/>
  <input type="submit" name="cancel" value="<{$smarty.const._CANCEL}>"/>
 </form>

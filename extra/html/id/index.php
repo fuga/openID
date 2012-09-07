@@ -1,6 +1,6 @@
 <?php
 /**
- * Extra Identifier and XRDS
+ * Output Extra Identifier and XRDS
  * 
  */
 define('_LEGACY_PREVENT_LOAD_CORE_', 1);
@@ -24,10 +24,10 @@ switch ($request) {
     case '/':
         $xrds_location = $base_url . '/idp.xrds';
         header('X-XRDS-Location: ' . $xrds_location);
-        echo sprintf(OPENID_IDPAGE, $xrds_location, $end_point);
+        echo sprintf(OPENID_IDPAGE, $xrds_location, $end_point, XOOPS_URL);
         break;
     default:
         $xrds_location = $base_url . '/user.xrds';
         header('X-XRDS-Location: ' . $xrds_location);
-        echo sprintf(OPENID_IDPAGE, $xrds_location, $end_point);
+        echo sprintf(OPENID_IDPAGE, $xrds_location, $end_point, XOOPS_URL);
 }

@@ -42,4 +42,8 @@ define('_MD_OPENID_ERROR_REGISTERNG', '申し訳ありません。登録中に�
 define('_MD_OPENID_ERROR_INCORRECTLOGIN', 'ユーザー名かパスワード（あるいは両方）が間違っています。');
 define('_MD_OPENID_MESSAGE_LOADING', '処理中です。しばらくおまちください。');
 define('_MD_OPENID_MESSAGE_INPUT_ID', '%sのIDを入力してください。');
-?>
+// OpenID Provider
+define('_MD_OPENID_MESSAGE_LOGIN_AS', 'あなたの提示したOpenIDを認証するには、このサイトに %s としてログインする必要があります。');
+define('_MD_OPENID_MESSAGE_DO_CONFIRM', 'このサイトにログインするには以下の情報をログイン先に提供することになります。提供に同意する項目にチェックを入れて送信ボタンを押してください。同意しない場合はキャンセルしてください。');
+define('_MD_OPENID_LANG_RP_ROOT', 'ログイン先');
+define('_MD_OPENID_LANG_NAME', '本名');

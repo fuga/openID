@@ -42,4 +42,8 @@ define('_MD_OPENID_ERROR_REGISTERNG', '┐╜д╖╠їдвдъд▐д╗дєбг┼╨╧┐├цд╦еиещб╝дм╚п└╕д╖д
 define('_MD_OPENID_ERROR_INCORRECTLOGIN', 'ецб╝е╢б╝╠╛дле╤е╣еяб╝е╔б╩двдыддд╧╬╛╩¤б╦дм┤╓░уд├д╞ддд▐д╣бг');
 define('_MD_OPENID_MESSAGE_LOADING', '╜ш═¤├цд╟д╣бгд╖д╨дщдпдкд▐д┴дпд└д╡ддбг');
 define('_MD_OPENID_MESSAGE_INPUT_ID', '%sд╬IDдЄ╞■╬╧д╖д╞дпд└д╡ддбг');
-?>
+// OpenID Provider
+define('_MD_OPENID_MESSAGE_LOGIN_AS', 'двд╩д┐д╬─є╝ид╖д┐OpenIDдЄ╟з╛┌д╣дыд╦д╧бвд│д╬е╡еде╚д╦ %s д╚д╖д╞еэе░едеєд╣ды╔м═╫дмдвдъд▐д╣бг');
+define('_MD_OPENID_MESSAGE_DO_CONFIRM', 'д│д╬е╡еде╚д╦еэе░едеєд╣дыд╦д╧░╩▓╝д╬╛Ё╩єдЄеэе░едеє└шд╦─є╢бд╣дыд│д╚д╦д╩дъд▐д╣бг─є╢бд╦╞▒░╒д╣ды╣р╠▄д╦е┴езе├епдЄ╞■дьд╞┴ў┐ое▄е┐еєдЄ▓бд╖д╞дпд└д╡ддбг╞▒░╒д╖д╩дд╛ь╣чд╧енеуеєе╗еыд╖д╞дпд└д╡ддбг');
+define('_MD_OPENID_LANG_RP_ROOT', 'еэе░едеє└ш');
+define('_MD_OPENID_LANG_NAME', '╦▄╠╛');
